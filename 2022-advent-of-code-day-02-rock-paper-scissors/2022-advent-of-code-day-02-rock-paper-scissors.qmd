@@ -7,36 +7,22 @@ observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-02-rock-
 ---
 
 ```{ojs}
-md`# 2022 Advent of Code • Day 02 • Rock Paper Scissors`
+md`# 2022 Advent of Code • [Day 02](https://adventofcode.com/2022/day/2) • Rock Paper Scissors`
 ```
 
 ```{ojs}
-md`https://adventofcode.com/2022/day/2`
-```
+md`## Part 0
 
-```{ojs}
-md`- Rock defeats Scissors
-- Scissors defeats Paper
-- Paper defeats Rock`
-```
+We make a bad assumption with imperfect knowledge for this part since the second value in the input is not the "move" (we learn that later). We assumed both A,B,C and X,Y,Z referred to Rock,Paper,Scissors (RPS). Each line is a round in an RPS contest and we have a scoring algorithm to implement for each round: 
 
-```{ojs}
-choice = ({
-  X: 1,
-  Y: 2,
-  Z: 3
-})
-```
+>The score for a single round is the score for the shape you selected (1 for Rock, 2 for Paper, and 3 for Scissors) plus the score for the outcome of the round (0 if you lost, 3 if the round was a draw, and 6 if you won)
 
-```{ojs}
-score = ({
-  "A Y": 6,
-  "B Z": 6,
-  "C X": 6,
-  "A X": 3,
-  "B Y": 3,
-  "C Z": 3
-})
+What would your total score be if everything goes exactly according to your strategy guide?
+
+We have some helper objects for both sections.
+
+- `score` is a lookup table which maps all potential plays to the win/lose/draw score 
+- `choice` is a lookup table for the value of our (incorrectly assumed) RPS choice`
 ```
 
 ```{ojs}
@@ -56,9 +42,60 @@ d3.sum(
 ```
 
 ```{ojs}
-md`- `X` means you need to lose
+md`## Part 1
+
+We now know what the second letters mean:
+
+- `X` means you need to lose
 - `Y` means you need to end the round in a draw
-- `Z` means you need to win`
+- `Z` means you need to win
+
+So, we need to both figure out what move to make and then do the scoring again.
+
+Since the input space is super small, we'll use another lookup table named `move` which maps the input to the move we need to make given the new direction.`
+```
+
+```{ojs}
+d3.sum(
+  input0
+    .split("\n")
+    .map(
+      (need) => (score[move[need]] ??= 0) + choice[move[need].split(" ").pop(2)]
+    )
+)
+```
+
+```{ojs}
+d3.sum(
+  input1
+    .split("\n")
+    .map(
+      (need) => (score[move[need]] ??= 0) + choice[move[need].split(" ").pop(2)]
+    )
+)
+```
+
+```{ojs}
+md`## Helpers`
+```
+
+```{ojs}
+score = ({
+  "A Y": 6,
+  "B Z": 6,
+  "C X": 6,
+  "A X": 3,
+  "B Y": 3,
+  "C Z": 3
+})
+```
+
+```{ojs}
+choice = ({
+  X: 1,
+  Y: 2,
+  Z: 3
+})
 ```
 
 ```{ojs}
@@ -76,23 +113,7 @@ move = ({
 ```
 
 ```{ojs}
-d3.sum(
-  input0
-    .split("\n")
-    .map(
-      (need) => (score[move[need]] ??= 0) + choice[move[need].split(" ").pop(2)]
-    )
-)
-```
-
-```{ojs}
-d3.sum(
-  input1
-    .split("\n")
-    .map(
-      (need) => (score[move[need]] ??= 0) + choice[move[need].split(" ").pop(2)]
-    )
-)
+md`## Inputs`
 ```
 
 ```{ojs}

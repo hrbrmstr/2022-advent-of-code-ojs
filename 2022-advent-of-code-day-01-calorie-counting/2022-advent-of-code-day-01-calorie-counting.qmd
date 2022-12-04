@@ -7,11 +7,19 @@ observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-01-calor
 ---
 
 ```{ojs}
-md`# 2022 Advent of Code • Day 01 • Calorie Counting`
+md`# 2022 Advent of Code • [Day 01](https://adventofcode.com/2022/day/1) • Calorie Counting`
 ```
 
 ```{ojs}
-md`https://adventofcode.com/2022/day/1`
+md`## Part 0
+
+Find the Elf carrying the most Calories. How many total Calories is that Elf carrying?
+
+As in previous years, there's a line-oriented input "file".
+
+In this exercise, each elf is separated by a blank line, so there's lots of splitting; there's also lots of parsing since we need numbers, not strings.
+
+The D3 standard library helps us out with `max` and `sum`.`
 ```
 
 ```{ojs}
@@ -20,6 +28,34 @@ d3.max(
     .split("\n\n")
     .map((s) => s.split("\n").map((n) => parseInt(n)))
     .map((n) => d3.sum(n))
+)
+```
+
+```{ojs}
+d3.max(
+  input1
+    .split("\n\n")
+    .map((s) => s.split("\n").map((n) => parseInt(n)))
+    .map((n) => d3.sum(n))
+)
+```
+
+```{ojs}
+md`## Part 1
+
+Find the top three Elves carrying the most Calories. How many Calories are those Elves carrying in total?
+
+D3's sort helpers make this very succinct.`
+```
+
+```{ojs}
+d3.sum(
+  input1
+    .split("\n\n")
+    .map((s) => s.split("\n").map((n) => parseInt(n)))
+    .map((n) => d3.sum(n))
+    .sort(d3.descending)
+    .slice(0, 3)
 )
 ```
 
@@ -35,23 +71,7 @@ d3.sum(
 ```
 
 ```{ojs}
-d3.max(
-  input1
-    .split("\n\n")
-    .map((s) => s.split("\n").map((n) => parseInt(n)))
-    .map((n) => d3.sum(n))
-)
-```
-
-```{ojs}
-d3.sum(
-  input1
-    .split("\n\n")
-    .map((s) => s.split("\n").map((n) => parseInt(n)))
-    .map((n) => d3.sum(n))
-    .sort(d3.descending)
-    .slice(0, 3)
-)
+md`## Inputs`
 ```
 
 ```{ojs}
