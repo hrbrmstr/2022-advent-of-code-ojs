@@ -1,0 +1,141 @@
+---
+title: '2022 Advent of Code • Day 05 • 📦 Supply Stacks (Animated)'
+author: 'boB Rudis'
+format: html
+echo: false
+observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-05-supply-stacks-animated'
+---
+
+```{ojs}
+md`# 2022 Advent of Code • Day 05 • 📦 Supply Stacks (Animated)`
+```
+
+```{ojs}
+viewof inputSource = Inputs.select(
+  new Map([
+    ["Test Data", input00],
+    ["Puzzle Data", input01]
+  ]),
+  { value: "Test Data", label: "Stacks Source" }
+)
+```
+
+```{ojs}
+viewof speed = Inputs.radio(["Slow", "Fast", "Insane"], {
+  label: "Frame rate",
+  value: "Slow"
+})
+```
+
+```{ojs}
+viewof crateMover = Inputs.radio(
+  ["9000 (Individual Boxes)", "9001 (Multiple Boxes)"],
+  {
+    label: "CrateMover Model",
+    value: "9000 (Individual Boxes)"
+  }
+)
+```
+
+```{ojs}
+viewof moveIdx = Scrubber(d3.range(moves.length), {
+  autoplay: false,
+  loop: false,
+  delay: speed == "Insane" ? 50 : speed == "Fast" ? 250 : 1000
+})
+```
+
+```{ojs}
+{
+  const stacksRaw = raw.stacks;
+  const movesRaw = raw.moves;
+  const nmoves = moveIdx + 1;
+
+  const stacksSplit = stacksRaw.split("\n");
+
+  const numberOfStacks = parseInt(
+    stacksSplit
+      .slice(-1)[0]
+      .split(/\s+/g)
+      .filter((d) => d != "")
+      .slice(-1)[0]
+  );
+
+  const stacksRegexp = new RegExp(
+    "(.{3}) ".repeat(numberOfStacks).replace(/.$/, ""),
+    "gm"
+  );
+
+  var stacks = [...stacksRaw.matchAll(stacksRegexp)]
+    .map((d) => d.slice(1))
+    .slice(0, -1);
+
+  stacks = stacks[0]
+    .map((col, idx) => stacks.map((row) => row[idx]))
+    .map((col) =>
+      col.filter((d) => d != "   ").map((d) => d.replace(/[\[\]]/g, ""))
+    );
+
+  moves.slice(0, nmoves).forEach(([nBoxes, fromStack, toStack]) => {
+    const moved = stacks[fromStack - 1].splice(0, nBoxes);
+    crateMover == "9000 (Individual Boxes)"
+      ? stacks[toStack - 1].unshift(...moved.reverse())
+      : stacks[toStack - 1].unshift(...moved);
+  });
+
+  return DrawStacks(stacks);
+}
+```
+
+```{ojs}
+moves = [...raw.moves.matchAll(dslRegexp)].map((d) =>
+  d.slice(1).map((n) => parseInt(n))
+)
+```
+
+```{ojs}
+dslRegexp = /move ([?:\d]+) from ([?:\d]+) to ([?:\d]+)/g
+```
+
+```{ojs}
+raw = {
+  const [stacksRaw, movesRaw] = inputSource.split("\n\n");
+  return { stacks: stacksRaw, moves: movesRaw };
+}
+```
+
+```{ojs}
+function DrawStacks(stacks = [["C"], ["M"], ["Z", "N", "D", "P"]]) {
+  const stackDepth = d3.max(stacks.map((d) => d.length));
+  stacks = stacks.map((stack) => {
+    stack.unshift(...Array(stackDepth - stack.length).fill(" "));
+    return stack.map((d) => (d == " " ? "   " : `[${d}]`));
+  });
+  stacks = d3
+    .range(stackDepth)
+    .map((i) => stacks.map((d) => d[i]).join(" "))
+    .join("\n");
+  return html`<pre>${stacks}</pre>`;
+}
+```
+
+```{ojs}
+import { Scrubber } from "@mbostock/scrubber"
+```
+
+```{ojs}
+md`## Inputs`
+```
+
+```{ojs}
+input = input00
+```
+
+```{ojs}
+input00 = FileAttachment("input00.txt").text()
+```
+
+```{ojs}
+input01 = FileAttachment("input01.txt").text()
+```
+

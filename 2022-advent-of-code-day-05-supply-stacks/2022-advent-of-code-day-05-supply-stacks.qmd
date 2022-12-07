@@ -1,0 +1,200 @@
+---
+title: '2022 Advent of Code • Day 05 • 📦 Supply Stacks'
+author: 'boB Rudis'
+format: html
+echo: false
+observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-05-supply-stacks'
+---
+
+```{ojs}
+md`# 2022 Advent of Code • [Day 05](https://adventofcode.com/2022/day/5) • 📦 Supply Stacks`
+```
+
+```{ojs}
+md`>_NOTE: There is a non-annotated [animated version](https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-05-supply-stacks-animated?collection=@hrbrmstr/2022-advent-of-code) of this notebook._`
+```
+
+```{ojs}
+md`These are definitely better "basics of data structures" story-based assignments than I had back in the day.
+
+This is no "[Hanoi](https://en.wikipedia.org/wiki/Tower_of_Hanoi)" problem (yet…I type this as just starting the exercise), but it should be fun for folks using this to learn programming.
+
+We use some Observable-specific bits here (`FileAttachment`s), and define a function for each part vs repeating code.
+
+We're also going to make liberal use of regular expressions as they make the "parsing" very succinct.`
+```
+
+```{ojs}
+md`## Part 0
+
+Essentially get the number and contents of the stacks and then use the mini-[DSL](https://en.wikipedia.org/wiki/Domain-specific_language) to manipulate the stacks.
+
+Let's explain things a bit since we're using regular expressions to do some fancy data wrangling:
+
+This:
+
+```js
+const dslRegexp = /move ([?:\d]+) from ([?:\d]+) to ([?:\d]+)/g;
+```
+
+says _"capture match groups for the three numbers"_.
+
+When we apply that globally to the moves, it'll return an array of arrays. e.g.
+
+```js
+[...`move 1 from 2 to 1
+move 3 from 1 to 3`.matchAll(dslRegexp)]
+```
+
+gives us this:`
+```
+
+```{ojs}
+{
+  const dslRegexp = /move ([?:\d]+) from ([?:\d]+) to ([?:\d]+)/g;
+  return [
+    ...`move 1 from 2 to 1
+move 3 from 1 to 3`.matchAll(dslRegexp)
+  ];
+}
+```
+
+```{ojs}
+md`We need to use the `[...]` bit since `matchAll()` just returns an iterator and we need to materialize the values (well, we don't _need_ to, but we are since the input is small).`
+```
+
+```{ojs}
+known00 = move0(input00)
+```
+
+```{ojs}
+puzzle00 = move0(input01)
+```
+
+```{ojs}
+move0 = function (input) {
+  const [stacksRaw, movesRaw] = input.split("\n\n");
+
+  // Get moves b/c they're easy to get
+  const dslRegexp = /move ([?:\d]+) from ([?:\d]+) to ([?:\d]+)/g;
+
+  // this is now an array of arrays;
+  // each array is [# to move, from which stack, to which stack]
+  const moves = [...movesRaw.matchAll(dslRegexp)].map((d) =>
+    d.slice(1).map((n) => parseInt(n))
+  );
+
+  // need each row as a separate array
+  const stacksSplit = stacksRaw.split("\n");
+
+  // get the number of stacks from the last line
+  const numberOfStacks = parseInt(
+    stacksSplit
+      .slice(-1)[0]
+      .split(/\s+/g)
+      .filter((d) => d != "")
+      .slice(-1)[0]
+  );
+
+  // build a dynamic regexp string since we won't know the number of columns
+  const stacksRegexp = new RegExp(
+    "(.{3}) ".repeat(numberOfStacks).replace(/.$/, ""),
+    "gm"
+  );
+
+  // use the regexp to find all the matches;
+  // remove the bottom row which are the #'s we got way above
+  var stacks = [...stacksRaw.matchAll(stacksRegexp)]
+    .map((d) => d.slice(1))
+    .slice(0, -1);
+
+  // rows to columns, removing blanks and getting rid of brackets
+  stacks = stacks[0]
+    .map((col, idx) => stacks.map((row) => row[idx]))
+    .map((col) =>
+      col.filter((d) => d != "   ").map((d) => d.replace(/[\[\]]/g, ""))
+    );
+
+  // move the boxes around!
+  moves.forEach(([nBoxes, fromStack, toStack]) => {
+    const moved = stacks[fromStack - 1].splice(0, nBoxes);
+    stacks[toStack - 1].unshift(...moved.reverse());
+  });
+
+  // get the first element from each stack and smush them together
+  return stacks.map((d) => d[0]).join("");
+}
+```
+
+```{ojs}
+md`## Part 1`
+```
+
+```{ojs}
+md`The only thing we change here is to get rid of the `.reverse()` in the `unshift()` call at the end.`
+```
+
+```{ojs}
+known01 = move1(input00)
+```
+
+```{ojs}
+puzzle01 = move1(input01)
+```
+
+```{ojs}
+move1 = function (input) {
+  const [stacksRaw, movesRaw] = input.split("\n\n");
+
+  const dslRegexp = /move ([?:\d]+) from ([?:\d]+) to ([?:\d]+)/g;
+
+  const moves = [...movesRaw.matchAll(dslRegexp)].map((d) =>
+    d.slice(1).map((n) => parseInt(n))
+  );
+
+  const stacksSplit = stacksRaw.split("\n");
+
+  const numberOfStacks = parseInt(
+    stacksSplit
+      .slice(-1)[0]
+      .split(/\s+/g)
+      .filter((d) => d != "")
+      .slice(-1)[0]
+  );
+
+  const stacksRegexp = new RegExp(
+    "(.{3}) ".repeat(numberOfStacks).replace(/.$/, ""),
+    "gm"
+  );
+
+  var stacks = [...stacksRaw.matchAll(stacksRegexp)]
+    .map((d) => d.slice(1))
+    .slice(0, -1);
+
+  stacks = stacks[0]
+    .map((col, idx) => stacks.map((row) => row[idx]))
+    .map((col) =>
+      col.filter((d) => d != "   ").map((d) => d.replace(/[\[\]]/g, ""))
+    );
+
+  moves.forEach(([nBoxes, fromStack, toStack]) => {
+    const moved = stacks[fromStack - 1].splice(0, nBoxes);
+    stacks[toStack - 1].unshift(...moved); // THE ONLY LINE THAT CHANGED
+  });
+
+  return stacks.map((d) => d[0]).join("");
+}
+```
+
+```{ojs}
+md`## Inputs`
+```
+
+```{ojs}
+input00 = FileAttachment("input00.txt").text()
+```
+
+```{ojs}
+input01 = FileAttachment("input01.txt").text()
+```
+

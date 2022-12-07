@@ -1,0 +1,238 @@
+---
+title: '2022 Advent of Code • Day 07 • 💾 No Space Left On Device'
+author: 'boB Rudis'
+format: html
+echo: false
+observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-07-no-space-left-on-device'
+---
+
+```{ojs}
+md`# 2022 Advent of Code • [Day 07](https://adventofcode.com/2022/day/7) • 💾 No Space Left On Device`
+```
+
+```{ojs}
+viewof source = Inputs.radio(["Test input", "Puzzle  input"], {
+  label: "Data source",
+  value: "Test input"
+})
+```
+
+```{ojs}
+md`- Find all of the directories with a total size of at most 100,000. What is the sum of the total sizes of those directories?  
+
+  **Answer**: `${d3.format(",")(sumIf(fs))}`
+`
+```
+
+```{ojs}
+md` - Find the smallest directory that, if deleted, would free up enough space on the filesystem to run the update. What is the total size of that directory?  
+
+ Need to find closest dir to **`${d3.format(",")(30_000_000 - (70_000_000 - subtreeSum(fs)))}`** bytes
+ 
+  **Answer**: `${d3.format(",")(sizeOfTheSubtreeThatCanBeDeleted(fs, 30_000_000 - (70_000_000 - subtreeSum(fs))))}``
+```
+
+```{ojs}
+html`${makeList(fs)}`
+```
+
+```{ojs}
+md`Code for ^^ is in [one function below](https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-07-no-space-left-on-device?collection=@hrbrmstr/2022-advent-of-code#makeList) and there's some CSS way at the bottom for the formatting.`
+```
+
+```{ojs}
+md`## Part 0`
+```
+
+```{ojs}
+md`This sets up both parts since we first, turn the text output into a list of commands
+
+Looks like we need to parse the mini-filesystem DSL, build a tree structure, then recursively inspect the file/dir metadata to get the sizes.
+
+Also: _never complain about how easy a day's challenge might be, b/c it'll get you something like this the next day._`
+```
+
+```{ojs}
+commandList = (source == "Test input" ? input00 : input01)
+  .split(/\$/) // $ signifies the beginning of a command (we need to escape it b/c $ means eol in regex)
+  .slice(1) // ^^ creates an empty first element, so remove it
+  .map((line) => {
+    // for each command
+    const cmd = line
+      .trim() // get rid of beginning/ending whitespace
+      .split(/[ \n](.*)/s) // split it into two parts by the first whitespace occurrence
+      .slice(0, -1); // remove the trailing empty last element ^^ creates
+    return cmd[0] == "cd" // build the commands
+      ? { cmd: "cd", dir: cmd[1] }
+      : {
+          cmd: "ls",
+          output: cmd[1].split("\n").map((ls) => ls.split(" "))
+        };
+  })
+```
+
+```{ojs}
+md`Next, we gotta turn that into a proper filesystem. Just like a real filesystem, we need to preserve the parent/child directory relationships with a pointer to the previous directory for each subdir.`
+```
+
+```{ojs}
+fs = {
+  const rootNode = { kind: "d", entries: {} }; // start of directory tree
+  var currNode = rootNode; // current node is the start of the tree
+
+  commandList.forEach((cmd) => {
+    switch (cmd.cmd) {
+      case "cd": // if cmd is chgdir
+        currNode = currNode.entries[ // we don't know what crazy "cd" sequence the puzzle input will do
+          cmd.dir == ".." ? "_PARENTDIR" : cmd.dir // so we only add a directory entry if it doesn't exist
+        ] ??= {
+          kind: "d",
+          entries: { ["_PARENTDIR"]: currNode }
+        };
+        break;
+      case "ls":
+        for (const output of cmd.output) {
+          const [sizeOrDir, fileOrDirName] = output;
+          currNode.entries[fileOrDirName] =
+            sizeOrDir == "dir" // if "ls" output entry is a directory
+              ? { kind: "d", entries: { ["_PARENTDIR"]: currNode } } // create it with a link to parent
+              : { kind: "f", fsize: +sizeOrDir }; // otherwise add a file with size
+        }
+    }
+  });
+
+  return rootNode;
+}
+```
+
+```{ojs}
+md`I have not written an actual tree traversal function in _ages_. This takes a starting node and a lambda function to execute for all leaf nodes.`
+```
+
+```{ojs}
+function traverse(startNode, ƒ) {
+  const recurse = (node) => {
+    for (const name in node.entries) {
+      if (name == "_PARENTDIR") continue;
+      const child = node.entries[name];
+      if (child.kind == "d") recurse(child);
+      ƒ(child, name);
+    }
+  };
+
+  recurse(startNode);
+}
+```
+
+```{ojs}
+md`Make a function that'll just give us the whole sum of a given subtree`
+```
+
+```{ojs}
+function subtreeSum(startNode) {
+  var sum = 0;
+  traverse(startNode, (node) => {
+    if (node.kind == "f") sum += node.fsize;
+  });
+  return sum;
+}
+```
+
+```{ojs}
+md`Now we need another one that uses ^^ but limits the overall sum to just subtrees <= a given `under` specified.`
+```
+
+```{ojs}
+function sumIf(startNode, under = 100000) {
+  var sum = 0;
+  traverse(startNode, (node) => {
+    if (node.kind == "d") {
+      const nodeSum = subtreeSum(node);
+      if (nodeSum <= under) sum += nodeSum;
+    }
+  });
+  return sum;
+}
+```
+
+```{ojs}
+md`This is just for fun to make the directory listing.`
+```
+
+```{ojs}
+function makeList(subTree) {
+  function recurse(node) {
+    var ret = "";
+    for (const name in node.entries) {
+      if (name == "_PARENTDIR") continue;
+      const child = node.entries[name];
+      if (child.kind == "d") {
+        ret += `<li class="tree"><details open><summary>${`🗂️ ${name} <span class="size">(${d3.format(
+          ","
+        )(subtreeSum(child))})</span>`}</summary>\n<ul>\n${recurse(
+          child
+        )}\n</ul>`;
+      } else {
+        ret += `<li class="tree">📄 ${name} <span class="size">(${d3.format(
+          ","
+        )(child.fsize)})</span></li> `;
+      }
+    }
+    return ret;
+  }
+
+  return `<ul class="tree">${recurse(subTree)}</ul>`;
+}
+```
+
+```{ojs}
+md`## Part 1`
+```
+
+```{ojs}
+md`The second part is just another tree traversal. We're deleting directories, NOT FILES, so we only do the size comparison when we hit a directory and stop accumulating once we hit the target. 
+
+We compute `needToFind` up at the top of the notebook.`
+```
+
+```{ojs}
+function sizeOfTheSubtreeThatCanBeDeleted(subTree, needToFind) {
+  var outSize = Number.MAX_VALUE;
+  traverse(subTree, (node) => {
+    if (node.kind == "d") {
+      const currSize = subtreeSum(node);
+      if (currSize < outSize && currSize >= needToFind) outSize = currSize;
+    }
+  });
+  return outSize;
+}
+```
+
+```{ojs}
+md`## Inputs`
+```
+
+```{ojs}
+input00 = FileAttachment("input00.txt").text()
+```
+
+```{ojs}
+input01 = FileAttachment("input01.txt").text()
+```
+
+```{ojs}
+html`<style>
+  .tree {
+    font-family: Menlo,Consolas,monaco,monospace;
+    font-size: 0.9rem;
+  }
+  ul.tree, li.tree {
+    list-style-type: none; /* Remove bullets */
+  }
+  .size {
+    font-size: 0.7rem;
+    color: #555555
+  }
+</style>`
+```
+

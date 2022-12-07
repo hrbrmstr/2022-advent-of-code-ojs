@@ -1,5 +1,5 @@
 ---
-title: '2022 Advent of Code • Day 03 • Rucksack Reorganization'
+title: '2022 Advent of Code • Day 03 • 🎒 Rucksack Reorganization'
 author: 'boB Rudis'
 format: html
 echo: false
@@ -7,7 +7,7 @@ observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-03-rucks
 ---
 
 ```{ojs}
-md`# 2022 Advent of Code • [Day 03](https://adventofcode.com/2022/day/3) • Rucksack Reorganization`
+md`# 2022 Advent of Code • [Day 03](https://adventofcode.com/2022/day/3) • 🎒 Rucksack Reorganization`
 ```
 
 ```{ojs}

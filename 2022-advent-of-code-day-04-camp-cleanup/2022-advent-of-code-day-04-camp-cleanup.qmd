@@ -1,5 +1,5 @@
 ---
-title: '2022 Advent of Code • Day 04 • Camp Cleanup'
+title: '2022 Advent of Code • Day 04 • 🧹 Camp Cleanup'
 author: 'boB Rudis'
 format: html
 echo: false
@@ -7,7 +7,7 @@ observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-04-camp-
 ---
 
 ```{ojs}
-md`# 2022 Advent of Code • [Day 04](https://adventofcode.com/2022/day/4) • Camp Cleanup
+md`# 2022 Advent of Code • [Day 04](https://adventofcode.com/2022/day/4) • 🧹 Camp Cleanup
 
 We do seem to be in a "set" theme for these days.
 
@@ -21,7 +21,49 @@ We also rely on D3 set operators to turn arrays into set objects for us.`
 ```{ojs}
 md`## Part 0
 
-We're looking for supersets in this part.`
+We're looking for supersets in this part.
+
+Here's what each pair of the first input looks like:`
+```
+
+```{ojs}
+SetVis(
+  input0.split("\n").map((pair) => {
+    const elves = pair
+      .split(",")
+      .map((elf) => elf.split("-").map((d) => parseInt(d)))
+      .map((elf) => d3.range(elf[0], elf[1] + 0.5));
+    return elves;
+  })
+)
+```
+
+```{ojs}
+SetVis = function (input) {
+  const container = html`<div></div>`;
+  d3.select(container)
+    .selectAll("div")
+    .data(input)
+    .enter()
+    .append("div")
+    .attr("style", "font-family: monospace")
+    .call((l) => {
+      l.append("p").html((d) => {
+        const [min, max] = d3.extent(d3.merge(d));
+        const fullRange = d3.range(min, max + 0.5).map((d) => d - min);
+        const elf1 = fullRange
+          .fill("·")
+          .fill("•", d3.min(d[0]) - min, d3.max(d[0]) - min + 1)
+          .join("");
+        const elf2 = fullRange
+          .fill("·")
+          .fill("•", d3.min(d[1]) - min, d3.max(d[1]) - min + 1)
+          .join("");
+        return elf1 + "<br/>" + elf2;
+      });
+    });
+  return container;
+}
 ```
 
 ```{ojs}
@@ -88,6 +130,18 @@ input1
     return d3.disjoint(elves[0], elves[1]);
   })
   .filter((d) => !d).length
+```
+
+```{ojs}
+SetVis(
+  input1.split("\n").map((pair) => {
+    const elves = pair
+      .split(",")
+      .map((elf) => elf.split("-").map((d) => parseInt(d)))
+      .map((elf) => d3.range(elf[0], elf[1] + 0.5));
+    return elves;
+  })
+)
 ```
 
 ```{ojs}

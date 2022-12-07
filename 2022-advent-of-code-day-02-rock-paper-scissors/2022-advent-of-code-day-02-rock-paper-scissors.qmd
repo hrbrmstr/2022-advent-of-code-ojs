@@ -1,5 +1,5 @@
 ---
-title: '2022 Advent of Code • Day 02 • Rock Paper Scissors'
+title: '2022 Advent of Code • Day 02 • 🪨 Rock Paper Scissors'
 author: 'boB Rudis'
 format: html
 echo: false
@@ -7,7 +7,7 @@ observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-02-rock-
 ---
 
 ```{ojs}
-md`# 2022 Advent of Code • [Day 02](https://adventofcode.com/2022/day/2) • Rock Paper Scissors`
+md`# 2022 Advent of Code • [Day 02](https://adventofcode.com/2022/day/2) • 🪨 Rock Paper Scissors`
 ```
 
 ```{ojs}
