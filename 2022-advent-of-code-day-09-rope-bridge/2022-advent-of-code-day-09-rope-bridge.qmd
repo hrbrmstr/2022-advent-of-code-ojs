@@ -1,0 +1,114 @@
+---
+title: '2022 Advent of Code • Day 09 • 🪢 Rope Bridge'
+author: 'boB Rudis'
+format: html
+echo: false
+observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-09-rope-bridge'
+---
+
+```{ojs}
+md`# 2022 Advent of Code • [Day 09](https://adventofcode.com/2022/day/9) • 🪢 Rope Bridge`
+```
+
+```{ojs}
+md`I declared time bankruptcy for the second part of Day 9.`
+```
+
+```{ojs}
+md`**How many positions does the tail of the rope visit at least once**? ${d3.format(",")(_.uniq(tailMoves.map((d) => d.join())).length)}`
+```
+
+```{ojs}
+viewof source = Inputs.radio(["Test input", "Puzzle input"], {label: "Select source:", value: "Test input"})
+```
+
+```{ojs}
+input = (source == "Test input" ? input00 : input01).split("\n").map((line) => {
+  const [dir, n] = line.split(" ");
+  return { dir: dir, n: parseInt(n) };
+})
+```
+
+```{ojs}
+headMoves = {
+  var x = 0,
+    y = 0;
+
+  return input
+    .flatMap((move) => {
+      switch (move.dir) {
+        case "L":
+          return _.range(0, move.n).map((_) => [x--, y]);
+        case "R":
+          return _.range(0, move.n).map((_) => [x++, y]);
+        case "U":
+          return _.range(0, move.n).map((_) => [x, y++]);
+        case "D":
+          return _.range(0, move.n).map((_) => [x, y--]);
+      }
+    })
+    .concat([[x, y]]);
+}
+```
+
+```{ojs}
+tailMoves = {
+  var tailX = 0,
+    tailY = 0;
+
+  return headMoves.map(([headX, headY]) => {
+    if (
+      !(
+        headX - 1 <= tailX &&
+        tailX <= headX + 1 &&
+        headY - 1 <= tailY &&
+        tailY <= headY + 1
+      )
+    ) {
+      tailX += headX > tailX ? 1 : headX < tailX ? -1 : 0;
+      tailY += headY > tailY ? 1 : headY < tailY ? -1 : 0;
+    }
+    return [tailX, tailY];
+  });
+}
+```
+
+```{ojs}
+function tailMove(headX, headY) {
+  var tailX = 0,
+    tailY = 0;
+
+  if (
+    !(
+      headX - 1 <= tailX &&
+      tailX <= headX + 1 &&
+      headY - 1 <= tailY &&
+      tailY <= headY + 1
+    )
+  ) {
+    tailX += headX > tailX ? 1 : headX < tailX ? -1 : 0;
+    tailY += headY > tailY ? 1 : headY < tailY ? -1 : 0;
+  }
+  return [tailX, tailY];
+}
+```
+
+```{ojs}
+md`## Inputs`
+```
+
+```{ojs}
+input00 = `R 4
+U 4
+L 3
+D 1
+R 4
+D 1
+L 5
+R 2`
+```
+
+```{ojs}
+input01 = (await FileAttachment("input01.txt").text()).trim()
+```
+

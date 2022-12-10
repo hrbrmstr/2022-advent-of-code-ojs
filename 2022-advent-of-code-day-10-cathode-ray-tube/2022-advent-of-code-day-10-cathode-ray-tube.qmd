@@ -1,0 +1,129 @@
+---
+title: '2022 Advent of Code • Day 10 • 📺 Cathode-Ray Tube'
+author: 'boB Rudis'
+format: html
+echo: false
+observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-10-cathode-ray-tube'
+---
+
+```{ojs}
+md`# 2022 Advent of Code • [Day 10](https://adventofcode.com/2022/day/10) • 📺 Cathode-Ray Tube`
+```
+
+```{ojs}
+md`This answer is a bit resource wasteful, but the input is tiny, so it kind of doesn't matter.`
+```
+
+```{ojs}
+viewof source = Inputs.radio(["Test input", "Puzzle input"], {
+  label: "Select source:",
+  value: "Test input"
+})
+```
+
+```{ojs}
+md`**What is the sum of the six signal strengths in the first part**? ${d3.format(",")(_.sum(
+  [20, 60, 100, 140, 180, 220].map((cycle) => cycle * cycles[cycle - 1].duringX)
+))}`
+```
+
+```{ojs}
+md`**What eight capital letters appear on your CRT**? (only relevant for the second part)`
+```
+
+```{ojs}
+html`<pre style="line-height: 0.6">
+${message}
+</pre>`
+```
+
+```{ojs}
+Plot.plot({
+  marks: [
+    Plot.cell(pixels, {
+      x: (d) => d.x,
+      y: (d) => d.y,
+      fill: "black"
+    })
+  ]
+})
+```
+
+```{ojs}
+input = (source == "Test input" ? input00 : input01).split("\n").map((line) => {
+  const [instr, val] = line.split(" ");
+  return { instr: instr, val: parseInt(val) };
+})
+```
+
+```{ojs}
+cycles = {
+  var X = 1;
+  return input.flatMap(({ instr, val }) => {
+    if (instr == "addx") {
+      const currX = X;
+      X += val;
+      return [
+        { instr: instr, opCycle: 1, opVal: val, duringX: currX, afterX: currX },
+        { instr: instr, opCycle: 2, opVal: val, duringX: currX, afterX: X }
+      ];
+    } else {
+      return [{ instr: instr, opCycle: 1, opVal: 0, duringX: X, afterX: X }];
+    }
+  });
+}
+```
+
+```{ojs}
+message = {
+  return [0, 40, 80, 120, 160, 200]
+    .map((cycle) => {
+      const row = " ".repeat(40).split("");
+      _.range(0 + cycle, 40 + cycle).forEach((v, i) => {
+        const spritePos = [
+          cycles[v].duringX - 1,
+          cycles[v].duringX,
+          cycles[v].duringX + 1
+        ];
+        if (spritePos.includes(i)) row[i] = "░";
+      });
+      return row.join("");
+    })
+    .join("\n");
+}
+```
+
+```{ojs}
+pixels = {
+  return [0, 40, 80, 120, 160, 200]
+    .flatMap((cycle, r) => {
+      const row = " ".repeat(40).split("");
+      return _.range(0 + cycle, 40 + cycle).flatMap((v, c) => {
+        const spritePos = [
+          cycles[v].duringX - 1,
+          cycles[v].duringX,
+          cycles[v].duringX + 1
+        ];
+        if (spritePos.includes(c)) return { x: c, y: r };
+      });
+    })
+    .filter((d) => d);
+}
+```
+
+```{ojs}
+
+```
+
+```{ojs}
+md`## Inputs`
+```
+
+```{ojs}
+input00 = (await FileAttachment("input00.txt").text()).trim()
+```
+
+```{ojs}
+input01 = (await FileAttachment("input01.txt").text()).trim()
+```
+

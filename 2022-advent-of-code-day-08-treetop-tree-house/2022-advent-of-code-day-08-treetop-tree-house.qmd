@@ -1,0 +1,198 @@
+---
+title: '2022 Advent of Code • Day 08 • 🌴 Treetop Tree House'
+author: 'boB Rudis'
+format: html
+echo: false
+observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-08-treetop-tree-house'
+---
+
+```{ojs}
+md`# 2022 Advent of Code • [Day 08](https://adventofcode.com/2022/day/8) • 🌴 Treetop Tree House`
+```
+
+```{ojs}
+md`I'm a bit behind on 2022 Advent of Code due to work & fam commitments, but I've caught up to Day 8 where all we do is traverse a matrix a couple times.
+
+Since Observable autoloads [lodash](https://lodash.com/docs/4.17.15) into each notebook, I decided to use it for things I used the D3 library for in previous days.
+
+Along with the numeric values (required to answer the challenge) we also make a nice map of the forest.`
+```
+
+```{ojs}
+viewof source = Inputs.radio(["Test input", "Puzzle input"], {
+  label: "Select source:",
+  value: "Test input"
+})
+```
+
+```{ojs}
+md`**Visible Trees**: ${d3.format(",")(_.sum(
+  _.flattenDeep(visMat)
+) +
+  2 * input.length +
+  2 * (input[0].length - 2))}`
+```
+
+```{ojs}
+html`
+<div style="overflow-x: auto; white-space: nowrap;">
+${"🌳".repeat(input.length)}<br/>
+${visMat.map((row) => {
+  return (
+    "🌳" + row.map((col) => (col == 1 ? "🌳" : "⬜️")).join("") + "🌳<br/>"
+  );
+})}
+${"🌳".repeat(input.length)}
+</div>
+`
+```
+
+```{ojs}
+md`**Max Scenic Score**: ${d3.format(",")(maxScenicCell.scenicScore)}`
+```
+
+```{ojs}
+html`<div style="overflow-x: auto; white-space: nowrap;">
+${treehouse.map((d) => d.join("")).join("<br/>")}
+</div>
+`
+```
+
+```{ojs}
+input = (source == "Test input" ? input00 : input01)
+  .split("\n")
+  .map((cells) => [...cells.split("").map((n) => parseInt(n))])
+```
+
+```{ojs}
+visMat = _.range(1, input[0].length - 1).map((col) => {
+  return _.range(1, input.length - 1).map((row) => {
+    const visLeft = all(
+      _.range(0, col).map((prevCol) => input[row][prevCol] < input[row][col])
+    );
+    const visRight = all(
+      _.range(col + 1, input[0].length).map(
+        (nextCol) => input[row][nextCol] < input[row][col]
+      )
+    );
+    const visUp = all(
+      _.range(0, row).map((prevRow) => input[prevRow][col] < input[row][col])
+    );
+    const visDown = all(
+      _.range(row + 1, input.length).map(
+        (nextRow) => input[nextRow][col] < input[row][col]
+      )
+    );
+    const flatVal = any(_.flattenDeep([visLeft, visRight, visUp, visDown]));
+    return +flatVal;
+  });
+})
+```
+
+```{ojs}
+treehouse = {
+  const house = input.map((d) => d.fill("⬜️"));
+  const { col, row, cellVal, scenicScore, left, right, up, down } =
+    maxScenicCell;
+  for (const x of _.range(col, col + right + 1).concat(
+    _.range(col, col - left - 1)
+  )) {
+    house[row][x] = "🌳";
+  }
+  for (const y of _.range(row, row + down + 1).concat(
+    _.range(row, row - up - 1)
+  )) {
+    house[y][col] = "🌳";
+  }
+  house[row][col] = "🏠";
+  return house;
+}
+```
+
+```{ojs}
+maxScenicCell = _.maxBy(scenicMat, "scenicScore")
+```
+
+```{ojs}
+scenicMat = _.range(1, input[0].length - 1).flatMap((col) => {
+  return _.range(1, input.length - 1).map((row) => {
+    const visLeft = countUntilZero(
+      _.range(col - 1, -1).map(
+        (prevCol) => input[row][prevCol] >= input[row][col]
+      )
+    );
+    const visRight = countUntilZero(
+      _.range(col + 1, input[0].length).map(
+        (nextCol) => input[row][nextCol] >= input[row][col]
+      )
+    );
+    const visUp = countUntilZero(
+      _.range(row - 1, -1).map(
+        (prevRow) => input[prevRow][col] >= input[row][col]
+      )
+    );
+    const visDown = countUntilZero(
+      _.range(row + 1, input.length).map(
+        (nextRow) => input[nextRow][col] >= input[row][col]
+      )
+    );
+    const retVal = {
+      // this is only this complex b/c i'm drawing a picture, otherwise it'd just return the score
+      col: col,
+      row: row,
+      cellVal: input[row][col],
+      scenicScore: visLeft * visRight * visUp * visDown,
+      left: visLeft,
+      right: visRight,
+      up: visUp,
+      down: visDown
+    };
+    return retVal;
+  });
+})
+```
+
+```{ojs}
+md`## Inputs`
+```
+
+```{ojs}
+input00 = `30373
+25512
+65332
+33549
+35390`.trim()
+```
+
+```{ojs}
+input01 = (await FileAttachment("input01.txt").text()).trim()
+```
+
+```{ojs}
+md`## Helpers`
+```
+
+```{ojs}
+function all(arr) {
+  return _.sum(arr.map((_) => +_)) == arr.length;
+}
+```
+
+```{ojs}
+function any(arr) {
+  for (const elem of arr) if (elem) return true;
+  return false;
+}
+```
+
+```{ojs}
+function countUntilZero(arr) {
+  var ret = 0;
+  for (const elem of arr) {
+    if (elem) return ret + 1;
+    ret++;
+  }
+  return ret;
+}
+```
+

@@ -62,11 +62,12 @@ commandList = (source == "Test input" ? input00 : input01)
       .trim() // get rid of beginning/ending whitespace
       .split(/[ \n](.*)/s) // split it into two parts by the first whitespace occurrence
       .slice(0, -1); // remove the trailing empty last element ^^ creates
+
     return cmd[0] == "cd" // build the commands
       ? { cmd: "cd", dir: cmd[1] }
       : {
           cmd: "ls",
-          output: cmd[1].split("\n").map((ls) => ls.split(" "))
+          output: cmd[1].split("\n").map((ls) => ls.split(" ")) // unmangle the directory entries
         };
   })
 ```
@@ -90,6 +91,7 @@ fs = {
           entries: { ["_PARENTDIR"]: currNode }
         };
         break;
+
       case "ls":
         for (const output of cmd.output) {
           const [sizeOrDir, fileOrDirName] = output;
