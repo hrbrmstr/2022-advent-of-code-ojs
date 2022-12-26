@@ -28,11 +28,11 @@ md`**What is the sum of the six signal strengths in the first part**? ${d3.forma
 ```
 
 ```{ojs}
-md`**What eight capital letters appear on your CRT**? (only relevant for the second part)`
+md`**What eight capital letters appear on your CRT**? (only relevant for the second part's Puzzle Input)`
 ```
 
 ```{ojs}
-html`<pre style="line-height: 0.6">
+html`<pre id="letters" style="line-height: 0.6">
 ${message}
 </pre>`
 ```
@@ -50,10 +50,31 @@ Plot.plot({
 ```
 
 ```{ojs}
+md`**OCR'd Text**`
+```
+
+```{ojs}
+md`<strike>I need to figure out how to make this more reactive, but go down to [this code block](https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-10-cathode-ray-tube?collection=@hrbrmstr/2022-advent-of-code#img) and tap into the source cell and "save" the notebook after ticking "Puzzle input" above to get Tesseract to OCR the letters.</strike>
+
+I think I worked out the reactive bit. This shld change depending on the `input`.`
+```
+
+```{ojs}
+{
+  elem;
+  return (await Tesseract.recognize(img)).text.trim();
+}
+```
+
+```{ojs}
 input = (source == "Test input" ? input00 : input01).split("\n").map((line) => {
   const [instr, val] = line.split(" ");
   return { instr: instr, val: parseInt(val) };
 })
+```
+
+```{ojs}
+md`This is memory-wasteful, but makes both parts super simple to accomplish. Leaving in unused structure members to help self-document the code.`
 ```
 
 ```{ojs}
@@ -76,10 +97,11 @@ cycles = {
 
 ```{ojs}
 message = {
-  return [0, 40, 80, 120, 160, 200]
+  return [0, 40, 80, 120, 160, 200] // cheat our way making rows since we know max row/col ahead of time
     .map((cycle) => {
-      const row = " ".repeat(40).split("");
-      _.range(0 + cycle, 40 + cycle).forEach((v, i) => {
+      const row = " ".repeat(40).split(""); // row initially blank
+      _.range(0 + cycle, 40 + cycle).forEach((v, i) => { // as each pixel is visited
+        // again, kind of wasteful, but makes the solution easier to read
         const spritePos = [
           cycles[v].duringX - 1,
           cycles[v].duringX,
@@ -91,6 +113,10 @@ message = {
     })
     .join("\n");
 }
+```
+
+```{ojs}
+md`Same as ^^ just returning X/Y for us to use in `Plot``
 ```
 
 ```{ojs}
@@ -112,6 +138,10 @@ pixels = {
 ```
 
 ```{ojs}
+md`I mean, since we have a nice, structured array…`
+```
+
+```{ojs}
 
 ```
 
@@ -125,5 +155,69 @@ input00 = (await FileAttachment("input00.txt").text()).trim()
 
 ```{ojs}
 input01 = (await FileAttachment("input01.txt").text()).trim()
+```
+
+```{ojs}
+md`## Seeing if I can get Tesseract to OCR it`
+```
+
+```{ojs}
+Tesseract = require("https://bundle.run/tesseract.js@1.0.10")
+```
+
+```{ojs}
+md`Helper library to turn a DOM element into an image that we can pass to Tesseract.`
+```
+
+```{ojs}
+domtoimage = import("https://cdn.skypack.dev/dom-to-image@2.6.0?min")
+```
+
+```{ojs}
+md`Using a differeny "pixel glyph" to help with OCR`
+```
+
+```{ojs}
+messageBlocks = {
+  return [0, 40, 80, 120, 160, 200] // cheat our way making rows since we know max row/col ahead of time
+    .map((cycle) => {
+      const row = " ".repeat(40).split(""); // row initially blank
+      _.range(0 + cycle, 40 + cycle).forEach((v, i) => {
+        // as each pixel is visited
+        // again, kind of wasteful, but makes the solution easier to read
+        const spritePos = [
+          cycles[v].duringX - 1,
+          cycles[v].duringX,
+          cycles[v].duringX + 1
+        ];
+        if (spritePos.includes(i)) row[i] = "█";
+      });
+      return row.join("");
+    })
+    .join("\n");
+}
+```
+
+```{ojs}
+md`Messed with the line height to help OCR`
+```
+
+```{ojs}
+html`<pre id='test' style='line-height:0.5'>${messageBlocks}</pre>`
+```
+
+```{ojs}
+md`This is the image that gets made from ^^. Tweaked `width` and `height` to help OCR.`
+```
+
+```{ojs}
+img = {
+  elem; // this gets us reactivity
+  var node = document.getElementById("test");
+  const image = new Image();
+  image.height = 60;
+  image.src = await domtoimage.toPng(node, { width: 400, height: 80 });
+  return image;
+}
 ```
 

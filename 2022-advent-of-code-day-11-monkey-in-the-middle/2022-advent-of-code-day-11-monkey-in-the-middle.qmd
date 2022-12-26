@@ -1,0 +1,227 @@
+---
+title: '2022 Advent of Code • Day 11 • 🐒 Monkey in the Middle'
+author: 'boB Rudis'
+format: html
+echo: false
+observable: 'https://observablehq.com/@hrbrmstr/2022-advent-of-code-day-11-monkey-in-the-middle'
+---
+
+```{ojs}
+md`# 2022 Advent of Code • [Day 11](https://adventofcode.com/2022/day/11) • 🐒 Monkey in the Middle`
+```
+
+```{ojs}
+md`Kudos to the Advent of Code for making me remember & use maths I haven't had to use in ages.`
+```
+
+```{ojs}
+viewof source = Inputs.radio(["Test input", "Puzzle input"], {
+  label: "Select source:",
+  value: "Test input"
+})
+```
+
+```{ojs}
+md`**What is the level of monkey business after 20 rounds of stuff-slinging simian shenanigans**? ${d3.format(",")(part0MonkeyBusiness)}
+
+**What is the level of monkey business after 10,000 rounds**? ${d3.format(",")(part1MonkeyBusiness)}`
+```
+
+```{ojs}
+md`## Part 0`
+```
+
+```{ojs}
+part0MonkeyBusiness = new Uint32Array(part0.map((m) => m.itemsInspected))
+  .sort()
+  .slice(-2)
+  .reduce((a, b) => a * b)
+```
+
+```{ojs}
+part0 = {
+  const monkeys = parseInput();
+
+  _.range(0, 20).forEach((round) => {
+    _.range(0, monkeys.length).forEach((mId) => {
+      const m = monkeys[mId];
+      monkeys[mId].itemsInspected += m.items.length;
+
+      for (const item of m.items) {
+        item.worryLevel = computeWorryLevel(item.worryLevel, m.op, m.what);
+
+        item.worryLevel = Math.floor(item.worryLevel / 3);
+
+        if (item.worryLevel % m.divBy == 0) {
+          monkeys[m.ifTrue].items.push(item);
+        } else {
+          monkeys[m.ifFalse].items.push(item);
+        }
+      }
+
+      monkeys[mId].items = [];
+    });
+  });
+
+  return monkeys;
+}
+```
+
+```{ojs}
+function computeWorryLevel(worryLevel, op, what) {
+  const byVal = what == "old" ? worryLevel : +what;
+  if (op == "*") {
+    return worryLevel * byVal;
+  } else {
+    return worryLevel + byVal;
+  }
+}
+```
+
+```{ojs}
+md`## Part 1`
+```
+
+```{ojs}
+part1MonkeyBusiness = new Uint32Array(part1.map((m) => m.itemsInspected))
+  .sort()
+  .slice(-2)
+  .reduce((a, b) => a * b)
+```
+
+```{ojs}
+part1 = {
+  const monkeys = parseInput();
+  let modBy = monkeys.map((m) => m.divBy).reduce(lcm);
+
+  _.range(0, 10_000).forEach((round) => {
+    _.range(0, monkeys.length).forEach((mId) => {
+      const m = monkeys[mId];
+      monkeys[mId].itemsInspected += m.items.length;
+
+      for (const item of m.items) {
+        item.worryLevel = computeWorryLevelMod(
+          item.worryLevel,
+          m.op,
+          m.what,
+          modBy
+        );
+
+        if (item.worryLevel % m.divBy == 0) {
+          monkeys[m.ifTrue].items.push(item);
+        } else {
+          monkeys[m.ifFalse].items.push(item);
+        }
+      }
+
+      monkeys[mId].items = [];
+    });
+  });
+
+  return monkeys;
+}
+```
+
+```{ojs}
+function computeWorryLevelMod(worryLevel, op, what, modBy) {
+  const byVal = what == "old" ? worryLevel : +what;
+  if (op == "*") {
+    return (worryLevel * byVal) % modBy;
+  } else {
+    return (worryLevel + byVal) % modBy;
+  }
+}
+```
+
+```{ojs}
+md`It has been a _long_ time since I've had to do these maths.`
+```
+
+```{ojs}
+md`### [Greatest Common Divisor](https://en.wikipedia.org/wiki/Greatest_common_divisor)`
+```
+
+```{ojs}
+function gcd(a, b) {
+  return b == 0 ? a : gcd(b, a % b);
+}
+```
+
+```{ojs}
+md`### [Least Common Multiple](https://en.wikipedia.org/wiki/Least_common_multiple)`
+```
+
+```{ojs}
+lcm = (a, b) => (a * b) / gcd(a, b)
+```
+
+```{ojs}
+function parseInput() {
+  return (source == "Test input" ? input00 : input01).split("\n\n").map((m) => {
+    const lines = m.split("\n").map((line) => line.trim());
+
+    const items = lines[1]
+      .replace(/Starting items: /, "")
+      .split(", ")
+      .map((n) => ({
+        worryLevel: +n
+      }));
+
+    const op = /Operation: new = old (?<op>.) (?<what>.*)/m.exec(lines[2]);
+
+    const divBy = lines[3].replace(/Test: divisible by /, "");
+
+    const ifTrue = lines[4].replace(/If true: throw to monkey /, "");
+    const ifFalse = lines[5].replace(/If false: throw to monkey /, "");
+
+    return {
+      items: items,
+      op: op.groups.op,
+      what: op.groups.what,
+      divBy: +divBy,
+      ifTrue: +ifTrue,
+      ifFalse: +ifFalse,
+      itemsInspected: 0
+    };
+  });
+}
+```
+
+```{ojs}
+md`## Inputs`
+```
+
+```{ojs}
+input00 = `Monkey 0:
+  Starting items: 79, 98
+  Operation: new = old * 19
+  Test: divisible by 23
+    If true: throw to monkey 2
+    If false: throw to monkey 3
+
+Monkey 1:
+  Starting items: 54, 65, 75, 74
+  Operation: new = old + 6
+  Test: divisible by 19
+    If true: throw to monkey 2
+    If false: throw to monkey 0
+
+Monkey 2:
+  Starting items: 79, 60, 97
+  Operation: new = old * old
+  Test: divisible by 13
+    If true: throw to monkey 1
+    If false: throw to monkey 3
+
+Monkey 3:
+  Starting items: 74
+  Operation: new = old + 3
+  Test: divisible by 17
+    If true: throw to monkey 0
+    If false: throw to monkey 1`.trim()
+```
+
+```{ojs}
+input01 = (await FileAttachment("input01.txt").text()).trim()
+```
+
